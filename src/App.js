@@ -1,25 +1,23 @@
 import React from 'react';
 
-import Home from './Home'
+import Home from './components/Home'
 
-import Welcome from './Welcome'
+import Welcome from './components/Welcome'
 
-import Login from './Login'
+import Login from './components/Login'
 
-import Meetings from './Meetings'
+import Meetings from './components/Meetings'
 
-import Register from './Register'
+import Register from './components/Register'
 
-import Navigation from './Navigation'
+import Navigation from './components/Navigation'
 
-import {Router} from '@reach/router'
+import {Router,navigate} from '@reach/router'
 
 import firebase from './Firebase'
 
 import dotenv from 'dotenv'
 dotenv.config()
-
-const { a } = require('./config')
 
 class App extends React.Component{
   
@@ -27,33 +25,72 @@ class App extends React.Component{
     super()
   this.state={
     
-    user:null
+    user:null,
+    dispalyName:null,
+    userID:null
   }
     
   }
   
   componentDidMount(){
-    const ref= firebase.database().ref('user')
-    ref.on('value',snapshot=>{
-      let FBuser=snapshot.val()
-      this.setState({user:FBuser})
-      
+    firebase.auth().onAuthStateChanged(FBuser=>{
+      if(FBuser){
+        this.setState({
+          user:FBuser,
+          dispalyName:FBuser.displayName,
+          userID:FBuser.uid
+        })
+      }
     })
-    
   }
+
+  logoutUser=e=>{
+    e.preventDefault()
+    this.setState({
+      userID:null,
+      user:null,
+      dispalyName:null
+    })
+    firebase.auth().signOut().then(()=>
+    {
+      navigate('/login')
+    })
+  }
+
+
+  registerUser=(userName)=>{
+    console.log(this)
+    firebase.auth().onAuthStateChanged( FBuser=>{
+      console.log(FBuser)
+      FBuser.updateProfile({dispalyName:userName})
+      .then(()=>{
+        console.log('after setting displayname:'+FBuser.displayName)
+        this.setState({
+          user:FBuser,
+          dispalyName:FBuser.displayName,
+          userID:FBuser.uid
+        })
+        navigate('/meetings')
+      })
+    } )
+
+  }
+  
+
   render(){
   return (
     <div>
-    <Navigation user={this.state.user}/>
-    {this.state.user && <Welcome user={this.state.user}/> }
+    <Navigation user={this.state.user} logoutUser={this.logoutUser}/>
+    {this.state.user && <Welcome userName={this.state.dispalyName}  logoutUser={this.logoutUser}/> }
    <Router>
    <Home path='/' user={this.state.user}/>
    <Login path='/login' />
    <Meetings path='/meetings' />
-   <Register path='/register' />
+   <Register path='/register' registerUser={this.registerUser} />
    </Router>
   </div>
   );
   }
 }
+
 export default App;
