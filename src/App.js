@@ -1,26 +1,59 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
 
-function App() {
+import Home from './Home'
+
+import Welcome from './Welcome'
+
+import Login from './Login'
+
+import Meetings from './Meetings'
+
+import Register from './Register'
+
+import Navigation from './Navigation'
+
+import {Router} from '@reach/router'
+
+import firebase from './Firebase'
+
+import dotenv from 'dotenv'
+dotenv.config()
+
+const { a } = require('./config')
+
+class App extends React.Component{
+  
+  constructor(){
+    super()
+  this.state={
+    
+    user:null
+  }
+    
+  }
+  
+  componentDidMount(){
+    const ref= firebase.database().ref('user')
+    ref.on('value',snapshot=>{
+      let FBuser=snapshot.val()
+      this.setState({user:FBuser})
+      
+    })
+    
+  }
+  render(){
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <div>
+    <Navigation user={this.state.user}/>
+    {this.state.user && <Welcome user={this.state.user}/> }
+   <Router>
+   <Home path='/' user={this.state.user}/>
+   <Login path='/login' />
+   <Meetings path='/meetings' />
+   <Register path='/register' />
+   </Router>
+  </div>
   );
+  }
 }
-
 export default App;
